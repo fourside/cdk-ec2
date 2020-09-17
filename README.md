@@ -1,14 +1,12 @@
-# Welcome to your CDK TypeScript project!
+# CDK-EC2
 
-This is a blank project for TypeScript development with CDK.
+## prerequisite
+- set env below:
+  - MY_IP ... ip address of your machine by cydr format
+  - KEY_NAME ... your key name using ssh to ec2
+  - CDK_DEFAULT_ACCOUNT ... aws access key of IAM user 
+  - CDK_DEFAULT_REGION ... region, ap-northeast-1
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-## Useful commands
-
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+## spec
+- boot an ec2 instance at 10:00 JST from monday to friday
+- stop an ec2 instance at 20:00 JST if ec2 tag "autoStop" is "true"
