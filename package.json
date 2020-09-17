@@ -35,6 +35,7 @@
     "@aws-cdk/aws-ec2": "^1.63.0",
     "@aws-cdk/aws-events": "^1.63.0",
     "@aws-cdk/aws-events-targets": "^1.63.0",
+    "@aws-cdk/aws-iam": "^1.63.0",
     "@aws-cdk/aws-lambda": "^1.63.0",
     "@aws-cdk/aws-lambda-nodejs": "^1.63.0",
     "@aws-cdk/aws-logs": "^1.63.0",

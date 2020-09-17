@@ -17,6 +17,7 @@ import { Runtime } from "@aws-cdk/aws-lambda";
 import { Rule, Schedule } from "@aws-cdk/aws-events";
 import { LambdaFunction } from "@aws-cdk/aws-events-targets";
 import { RetentionDays } from "@aws-cdk/aws-logs";
+import { Role, ManagedPolicy, ServicePrincipal } from "@aws-cdk/aws-iam";
 import * as path from "path";
 
 export class CdkEc2Stack extends Stack {
@@ -59,6 +60,14 @@ export class CdkEc2Stack extends Stack {
 
     Tags.of(instance).add("autoStop", "true");
 
+    const role = new Role(this, "ec2Role", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess"),
+        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
+      ],
+    });
+
     const lambdaOptions = {
       environment: {
         INSTANCE_ID: instance.instanceId,
@@ -67,6 +76,7 @@ export class CdkEc2Stack extends Stack {
       logRetention: RetentionDays.ONE_MONTH,
       timeout: Duration.minutes(3),
       sourceMaps: true,
+      role: role,
     };
 
     const autoBootLambda = new NodejsFunction(this, "autoBoot", {
@@ -96,7 +106,6 @@ export class CdkEc2Stack extends Stack {
       schedule: Schedule.cron({
         minute: "0",
         hour: "11", // JST 20
-        weekDay: "MON-FRI",
       }),
       targets: [new LambdaFunction(autoShutdownLambda)],
     });
