@@ -1,4 +1,4 @@
-import * as cdk from "@aws-cdk/core";
+import { Stack, StackProps, Construct, Duration } from "@aws-cdk/core";
 import {
   Vpc,
   SecurityGroup,
@@ -12,9 +12,15 @@ import {
   CfnEIP,
 } from "@aws-cdk/aws-ec2";
 import { CfnOutput, Tags } from "@aws-cdk/core";
+import { NodejsFunction } from "@aws-cdk/aws-lambda-nodejs";
+import { Runtime } from "@aws-cdk/aws-lambda";
+import { Rule, Schedule } from "@aws-cdk/aws-events";
+import { LambdaFunction } from "@aws-cdk/aws-events-targets";
+import { RetentionDays } from "@aws-cdk/aws-logs";
+import * as path from "path";
 
-export class CdkEc2Stack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class CdkEc2Stack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     const myIp = process.env.MY_IP || "";
@@ -52,6 +58,48 @@ export class CdkEc2Stack extends cdk.Stack {
     });
 
     Tags.of(instance).add("autoStop", "true");
+
+    const lambdaOptions = {
+      environment: {
+        INSTANCE_ID: instance.instanceId,
+      },
+      runtime: Runtime.NODEJS_12_X,
+      logRetention: RetentionDays.ONE_MONTH,
+      timeout: Duration.minutes(3),
+      sourceMaps: true,
+    };
+
+    const autoBootLambda = new NodejsFunction(this, "autoBoot", {
+      entry: path.join(__dirname, "../lambda/autoBoot/index.ts"),
+      handler: "handler",
+      cacheDir: ".parcel-cache/autoBoot",
+      ...lambdaOptions,
+    });
+
+    const autoShutdownLambda = new NodejsFunction(this, "autoShutdown", {
+      entry: path.join(__dirname, "../lambda/autoShutdown/index.ts"),
+      handler: "handler",
+      cacheDir: ".parcel-cache/autoShutdown",
+      ...lambdaOptions,
+    });
+
+    new Rule(this, "autoBootRule", {
+      schedule: Schedule.cron({
+        minute: "0",
+        hour: "1", // JST 10
+        weekDay: "MON-FRI",
+      }),
+      targets: [new LambdaFunction(autoBootLambda)],
+    });
+
+    new Rule(this, "autoShutdownRule", {
+      schedule: Schedule.cron({
+        minute: "0",
+        hour: "11", // JST 20
+        weekDay: "MON-FRI",
+      }),
+      targets: [new LambdaFunction(autoShutdownLambda)],
+    });
 
     new CfnOutput(this, "IP address", { value: elasticIP.ref });
   }
