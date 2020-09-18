@@ -9,8 +9,8 @@ export async function handler(event: any): Promise<void> {
       throw new Error("not passed INSTANCE_ID via env");
     }
     const running = await isRunning(instanceId, { ignoreAutoStop: true });
-    if (!running) {
-      console.log(`instance: ${instanceId} is not running.`);
+    if (running) {
+      console.log(`instance: ${instanceId} is running.`);
       return;
     }
     const result = await boot(instanceId);
