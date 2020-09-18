@@ -32,7 +32,7 @@ export class CdkEc2Stack extends Stack {
     if (!keyName) {
       throw new Error("set env KEY_NAME");
     }
-    const region = "ap-northeast-1";
+    const region = process.env.CDK_DEFAULT_REGION || "ap-northeast-1";
 
     const vpc = Vpc.fromLookup(this, "VPC", {
       isDefault: true,
