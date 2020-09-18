@@ -47,11 +47,12 @@ export class CdkEc2Stack extends Stack {
     securityGroup.addIngressRule(Peer.ipv4(myIp), Port.tcp(22));
 
     const UBUNTU_20_04_IMAGE_ID = "ami-09b86f9709b3c33d4";
+    const imageId = process.env.IMAGE_ID || UBUNTU_20_04_IMAGE_ID;
 
     const instance = new Instance(this, "instance", {
       instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
       vpc: vpc,
-      machineImage: MachineImage.genericLinux({ [region]: UBUNTU_20_04_IMAGE_ID }),
+      machineImage: MachineImage.genericLinux({ [region]: imageId }),
       securityGroup: securityGroup,
       keyName: keyName,
     });

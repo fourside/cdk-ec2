@@ -7,6 +7,7 @@
   - `CDK_DEFAULT_ACCOUNT` ... aws access key of IAM user 
   - optional
     - `CDK_DEFAULT_REGION` ... region, default is `ap-northeast-1`
+    - `IMAGE_ID` ... AMI, default is the image id of Ubuntu 20.04 
 
 ## spec
 - boot an ec2 instance at 10:00 JST from monday to friday
