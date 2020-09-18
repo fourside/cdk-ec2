@@ -66,12 +66,18 @@ export class CdkEc2Stack extends Stack {
       managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")],
     });
 
-    const policyStatement = new PolicyStatement({
+    const ec2StartStopPolicyStatement = new PolicyStatement({
       effect: Effect.ALLOW,
-      actions: ["ec2:StartInstances", "ec2:DescribeInstances", "ec2:StopInstances"],
+      actions: ["ec2:StartInstances", "ec2:StopInstances"],
       resources: [`arn:aws:ec2:${region}:*:instance/*`],
     });
-    role.addToPolicy(policyStatement);
+    const ec2DescribePolicyStatement = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ["ec2:DescribeInstances"],
+      resources: ["*"],
+    });
+    role.addToPolicy(ec2StartStopPolicyStatement);
+    role.addToPolicy(ec2DescribePolicyStatement);
 
     const lambdaOptions = {
       environment: {
