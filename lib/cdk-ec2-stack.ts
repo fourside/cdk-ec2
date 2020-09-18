@@ -17,7 +17,7 @@ import { Runtime } from "@aws-cdk/aws-lambda";
 import { Rule, Schedule } from "@aws-cdk/aws-events";
 import { LambdaFunction } from "@aws-cdk/aws-events-targets";
 import { RetentionDays } from "@aws-cdk/aws-logs";
-import { Role, ManagedPolicy, ServicePrincipal } from "@aws-cdk/aws-iam";
+import { Role, ManagedPolicy, ServicePrincipal, PolicyStatement, Effect } from "@aws-cdk/aws-iam";
 import * as path from "path";
 
 export class CdkEc2Stack extends Stack {
@@ -32,6 +32,7 @@ export class CdkEc2Stack extends Stack {
     if (!keyName) {
       throw new Error("set env KEY_NAME");
     }
+    const region = "ap-northeast-1";
 
     const vpc = Vpc.fromLookup(this, "VPC", {
       isDefault: true,
@@ -50,7 +51,7 @@ export class CdkEc2Stack extends Stack {
     const instance = new Instance(this, "instance", {
       instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
       vpc: vpc,
-      machineImage: MachineImage.genericLinux({ "ap-northeast-1": UBUNTU_20_04_IMAGE_ID }),
+      machineImage: MachineImage.genericLinux({ [region]: UBUNTU_20_04_IMAGE_ID }),
       securityGroup: securityGroup,
       keyName: keyName,
     });
@@ -60,13 +61,17 @@ export class CdkEc2Stack extends Stack {
 
     Tags.of(instance).add("autoStop", "true");
 
-    const role = new Role(this, "ec2Role", {
+    const role = new Role(this, "lambdaEc2Role", {
       assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-      managedPolicies: [
-        ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess"),
-        ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
-      ],
+      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole")],
     });
+
+    const policyStatement = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ["ec2:StartInstances", "ec2:DescribeInstances", "ec2:StopInstances"],
+      resources: [`arn:aws:ec2:${region}:*:instance/*`],
+    });
+    role.addToPolicy(policyStatement);
 
     const lambdaOptions = {
       environment: {
