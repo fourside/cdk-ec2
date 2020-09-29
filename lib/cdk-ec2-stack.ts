@@ -10,6 +10,7 @@ import {
   InstanceSize,
   MachineImage,
   CfnEIP,
+  BlockDeviceVolume,
 } from "@aws-cdk/aws-ec2";
 import { CfnOutput, Tags } from "@aws-cdk/core";
 import { NodejsFunction } from "@aws-cdk/aws-lambda-nodejs";
@@ -55,6 +56,12 @@ export class CdkEc2Stack extends Stack {
       machineImage: MachineImage.genericLinux({ [region]: imageId }),
       securityGroup: securityGroup,
       keyName: keyName,
+      blockDevices: [
+        {
+          deviceName: "/dev/sda1",
+          volume: BlockDeviceVolume.ebs(40),
+        },
+      ],
     });
     const elasticIP = new CfnEIP(this, "elasticIP", {
       instanceId: instance.instanceId,
